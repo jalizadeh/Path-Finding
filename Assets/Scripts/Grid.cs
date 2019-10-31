@@ -42,7 +42,7 @@ public class Grid : MonoBehaviour
                     + Vector3.right * (x * nodeDiamater + nodeRadius)
                     + Vector3.forward * (y * nodeDiamater + nodeRadius);
                 bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
-                grid[x, y] = new Node(walkable, worldPoint);
+                grid[x, y] = new Node(walkable, worldPoint, x, y);
 
                 /*
                 GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -55,7 +55,31 @@ public class Grid : MonoBehaviour
 
     }
 
-    public Node NodeFromGrid(Vector3 position) {
+    //Get the list of all 8 neigbours around the node
+    public List<Node> GetNeigbours(Node node)
+    {
+        List<Node> neigbours = new List<Node>();
+
+        for(int x=-1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                //skip the position of the node
+                if (x == 0 && y == 0)
+                    continue;
+
+                int checkX = node.gridX - x;
+                int checkY = node.gridY - y;
+
+                if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
+                    neigbours.Add(grid[checkX, checkY]);
+            }
+        }
+
+        return neigbours;
+    }
+
+    public Node NodeFromWorldPoint(Vector3 position) {
         float percentX = (position.x + gridWorldSize.x / 2) / gridWorldSize.x;
         float percentY = (position.z + gridWorldSize.y / 2) / gridWorldSize.y;
         percentX = Mathf.Clamp01(percentX);
@@ -74,20 +98,20 @@ public class Grid : MonoBehaviour
     }
 
     //Draw a wired cube to simulate the whole grid space
+    public List<Node> path = new List<Node>(); //path nodes, filled by PathFinding
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
 
         if(grid != null)
         {
-            Node playerNode = NodeFromGrid(player.position);
+            //Node playerNode = NodeFromWorldPoint(player.position);
             foreach(Node n in grid)
             {
                 Gizmos.color = (n.walkable) ? Color.white : Color.red;
-                if (playerNode == n)
-                {
-                    Gizmos.color = Color.cyan;
-                }
+                if (path != null)
+                    if(path.Contains(n))
+                        Gizmos.color = Color.black;
                 
                 Gizmos.DrawCube(n.worldPosition, Vector3.one * nodeDiamater * 0.95f);
             }
