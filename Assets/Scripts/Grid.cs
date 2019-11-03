@@ -5,6 +5,7 @@ using UnityEngine;
 public class Grid : MonoBehaviour
 {
 
+    #region VARIABLES
     public Transform player;
 
     Node[,] grid; //2D array of all nodes
@@ -20,6 +21,7 @@ public class Grid : MonoBehaviour
 
     public bool displayGridGizmos;
 
+
     //use it for creating the heap
     public int MaxGridSize {
         get
@@ -28,11 +30,27 @@ public class Grid : MonoBehaviour
         }
     }
 
+
+    //used for penalties on each layer
+    public TerrainType[] walkableRegions;
+    LayerMask walkableMask; //filled by Bitwise OR
+
+    //<layer Id , penalty> holder
+    Dictionary<int, int> walkableRegionDictionary = new Dictionary<int, int>();
+    
+    #endregion
+
     private void Awake()
     {
         nodeDiamater = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiamater);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiamater);
+
+        foreach(TerrainType region in walkableRegions)
+        {
+            walkableMask.value = walkableMask.value | region.mask.value;
+            walkableRegionDictionary.Add((int)Mathf.Log(region.mask.value, 2), region.penalty);
+        }
 
         CreateGrid();
     }
@@ -52,14 +70,21 @@ public class Grid : MonoBehaviour
                     + Vector3.right * (x * nodeDiamater + nodeRadius)
                     + Vector3.forward * (y * nodeDiamater + nodeRadius);
                 bool walkable = !(Physics.CheckSphere(worldPoint, nodeRadius, unwalkableMask));
-                grid[x, y] = new Node(walkable, worldPoint, x, y);
 
-                /*
-                GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                obj.transform.name = x + "." + y;
-                obj.transform.position = worldPoint;
-                obj.transform.localScale = Vector3.one;
-                */
+                //Calculate the movement penalty on each node
+                int movementPenalty = 0;
+
+                if (walkable)
+                {
+                    Ray ray = new Ray(worldPoint + Vector3.up * 50, Vector3.down);
+                    RaycastHit hit;
+                    if(Physics.Raycast(ray, out hit, 100, walkableMask))
+                    {
+                        walkableRegionDictionary.TryGetValue(hit.collider.gameObject.layer, out movementPenalty);
+                    }
+                }
+
+                grid[x, y] = new Node(walkable, worldPoint, x, y, movementPenalty);
             }
         }
 
@@ -121,6 +146,14 @@ public class Grid : MonoBehaviour
                 Gizmos.DrawCube(n.worldPosition, Vector3.one * nodeDiamater * 0.95f);
             }
         }
+    }
+
+
+    //Define layers and penalty for each
+    [System.Serializable]
+    public class TerrainType {
+        public LayerMask mask;
+        public int penalty;
     }
 
 }

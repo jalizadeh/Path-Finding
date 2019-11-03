@@ -21,16 +21,19 @@ public class Node : IHeapItem<Node>
         }
     }
 
+    public int movementPenalty;
+
     int heapIndex;
 
     public Node parent;
 
-    public Node(bool _walkable, Vector3 _wp, int _gridX, int _gridY)
+    public Node(bool _walkable, Vector3 _wp, int _gridX, int _gridY, int _penalty)
     {
         walkable = _walkable;
         worldPosition = _wp;
         gridX = _gridX;
         gridY = _gridY;
+        movementPenalty = _penalty;
     }
 
     public int HeapIndex
