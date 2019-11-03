@@ -18,7 +18,7 @@ public class Grid : MonoBehaviour
 
     Vector3 sharedPos;
 
-    public bool drawGizoms;
+    public bool displayGridGizmos;
 
     //use it for creating the heap
     public int MaxGridSize {
@@ -28,7 +28,7 @@ public class Grid : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void Awake()
     {
         nodeDiamater = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiamater);
@@ -108,41 +108,17 @@ public class Grid : MonoBehaviour
     }
 
     //Draw a wired cube to simulate the whole grid space
-    public List<Node> path = new List<Node>(); //path nodes, filled by PathFinding
-    public List<Node> openSet = new List<Node>(); //path nodes, filled by PathFinding
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, 1, gridWorldSize.y));
 
-        if(grid != null)
+        if(grid != null && displayGridGizmos)
         {
-            if (drawGizoms)
+            //Node playerNode = NodeFromWorldPoint(player.position);
+            foreach (Node n in grid)
             {
-                if(path != null)
-                {
-                    foreach (Node n in path)
-                    {
-                        Gizmos.color = Color.black;
-                        Gizmos.DrawCube(n.worldPosition, Vector3.one * nodeDiamater * 0.95f);
-                    }
-                }
-               
-            } else
-            {
-                //Node playerNode = NodeFromWorldPoint(player.position);
-                foreach (Node n in grid)
-                {
-                    Gizmos.color = (n.walkable) ? Color.white : Color.red;
-                    if (path != null && openSet != null)
-                    {
-                        if (path.Contains(n))
-                            Gizmos.color = Color.black;
-                        if (openSet.Contains(n))
-                            Gizmos.color = Color.cyan;
-                    }
-
-                    Gizmos.DrawCube(n.worldPosition, Vector3.one * nodeDiamater * 0.95f);
-                }
+                Gizmos.color = (n.walkable) ? Color.white : Color.red;
+                Gizmos.DrawCube(n.worldPosition, Vector3.one * nodeDiamater * 0.95f);
             }
         }
     }
