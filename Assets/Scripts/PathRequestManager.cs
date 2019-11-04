@@ -2,18 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Threading;
 
 public class PathRequestManager : MonoBehaviour
 {
-    PathFinding pathFinding;
-
-    Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
-    PathRequest currentPathRequest;
-
     //for accessing data from `static void RequestPath`
     static PathRequestManager instance;
+    PathFinding pathFinding;
 
-    bool isProcessing;
+    Queue<PathResult> results = new Queue<PathResult>();
 
     private void Awake()
     {
@@ -22,48 +19,71 @@ public class PathRequestManager : MonoBehaviour
     }
 
 
+    private void Update()
+    {
+        if(results.Count > 0)
+        {
+            int itemsInQueue = results.Count;
+            lock (results)
+            {
+                for (int i = 0; i < itemsInQueue; i++)
+                {
+                    PathResult result = results.Dequeue();
+                    result.callback(result.path, result.success);
+                }
+            }
+        }
+    }
+
     //Every unit requests the path from this method, and this method will return
     // via Action, the data, after processing (NOT immediately)
-    public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback)
+    public static void RequestPath(PathRequest request)
     {
-        PathRequest newPathRequest = new PathRequest(pathStart, pathEnd, callback);
-        instance.pathRequestQueue.Enqueue(newPathRequest);
-        instance.TryProcessingNext();
+        ThreadStart threadStart = delegate
+        {
+            instance.pathFinding.FindPath(request, instance.FinishedProcessingPath);
+        };
+
+        threadStart.Invoke();
     }
 
 
-    //Process each requested path, untill there is no more
-    private void TryProcessingNext()
-    {
-        if(!isProcessing && pathRequestQueue.Count > 0)
-        {
-            currentPathRequest = pathRequestQueue.Dequeue();
-            isProcessing = true;
-            pathFinding.StartFindPath(currentPathRequest.pathStart, currentPathRequest.pathEnd);
+    public void FinishedProcessingPath(PathResult result) {
+        lock (results) {
+            results.Enqueue(result);
         }
     }
+    
+}
 
 
-    public void FinishedProcessingPath(Vector3[] path, bool success) {
-        currentPathRequest.callback(path, success);
-        isProcessing = false;
-        TryProcessingNext();
+public struct PathResult
+{
+    public Vector3[] path;
+    public bool success;
+    public Action<Vector3[], bool> callback;
+
+    public PathResult(Vector3[] path, bool success, Action<Vector3[], bool> callback)
+    {
+        this.path = path;
+        this.success = success;
+        this.callback = callback;
     }
 
+}
 
 
-    //The structure of the data for each path request
-    struct PathRequest
+//The structure of the data for each path request
+public struct PathRequest
+{
+    public Vector3 pathStart;
+    public Vector3 pathEnd;
+    public Action<Vector3[], bool> callback;
+
+    public PathRequest(Vector3 _start, Vector3 _end, Action<Vector3[], bool> _callback)
     {
-        public Vector3 pathStart;
-        public Vector3 pathEnd;
-        public Action<Vector3[], bool> callback;
-
-        public PathRequest(Vector3 _start, Vector3 _end, Action<Vector3[], bool> _callback)
-        {
-            pathStart = _start;
-            pathEnd = _end;
-            callback = _callback;
-        }
+        pathStart = _start;
+        pathEnd = _end;
+        callback = _callback;
     }
 }
