@@ -157,7 +157,7 @@ MonoBehaviour:
   unwalkableMask:
     serializedVersion: 2
     m_Bits: 256
-  displayGridGizmos: 1
+  displayGridGizmos: 0
   walkableRegions:
   - mask:
       serializedVersion: 2
@@ -291,7 +291,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 91321480}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -46.21, y: 0, z: -46.33}
+  m_LocalPosition: {x: -21.3, y: 0, z: -8.2}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_Children: []
   m_Father: {fileID: 0}
@@ -382,7 +382,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 247323422}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -15.485029, y: 7.091797, z: 3.0130372}
+  m_LocalPosition: {x: -17.59, y: 7.091797, z: 4.3}
   m_LocalScale: {x: 2.287, y: 2.287, z: 6.4035997}
   m_Children: []
   m_Father: {fileID: 1249206309}
@@ -1185,3 +1185,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 91321485}
+  speed: 50
+  turnSpeed: 10
+  turnDst: 10
+  stoppingDst: 20
